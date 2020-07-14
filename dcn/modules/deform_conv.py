@@ -9,7 +9,7 @@ from torch import nn
 from torch.nn import init
 from torch.nn.modules.utils import _pair
 
-from functions.deform_conv_func import DeformConvFunction
+from ..functions.deform_conv_func import DeformConvFunction
 
 class DeformConv(nn.Module):
 
@@ -32,7 +32,7 @@ class DeformConv(nn.Module):
         self.deformable_groups = deformable_groups
         self.im2col_step = im2col_step
         self.use_bias = bias
-        
+
         self.weight = nn.Parameter(torch.Tensor(
             out_channels, in_channels//groups, *self.kernel_size))
         self.bias = nn.Parameter(torch.Tensor(out_channels))
@@ -87,12 +87,12 @@ class DeformConvPack(DeformConv):
 
     def forward(self, input):
         offset = self.conv_offset(input)
-        return DeformConvFunction.apply(input, offset, 
-                                          self.weight, 
-                                          self.bias, 
-                                          self.stride, 
-                                          self.padding, 
-                                          self.dilation, 
+        return DeformConvFunction.apply(input, offset,
+                                          self.weight,
+                                          self.bias,
+                                          self.stride,
+                                          self.padding,
+                                          self.dilation,
                                           self.groups,
                                           self.deformable_groups,
                                           self.im2col_step)

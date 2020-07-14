@@ -9,7 +9,7 @@ from torch import nn
 from torch.nn import init
 from torch.nn.modules.utils import _pair
 
-from functions.modulated_deform_conv_func import ModulatedDeformConvFunction
+from ..functions.modulated_deform_conv_func import ModulatedDeformConvFunction
 
 class ModulatedDeformConv(nn.Module):
 
@@ -92,12 +92,12 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
         o1, o2, mask = torch.chunk(out, 3, dim=1)
         offset = torch.cat((o1, o2), dim=1)
         mask = torch.sigmoid(mask)
-        return ModulatedDeformConvFunction.apply(input, offset, mask, 
-                                                self.weight, 
-                                                self.bias, 
-                                                self.stride, 
-                                                self.padding, 
-                                                self.dilation, 
+        return ModulatedDeformConvFunction.apply(input, offset, mask,
+                                                self.weight,
+                                                self.bias,
+                                                self.stride,
+                                                self.padding,
+                                                self.dilation,
                                                 self.groups,
                                                 self.deformable_groups,
                                                 self.im2col_step)

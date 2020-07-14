@@ -3,3 +3,6 @@
 _ext*
 __pycache__
 build
+.vscode
+dist
+*.egg-info
