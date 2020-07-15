@@ -31,13 +31,14 @@ class ModulatedDeformConv(nn.Module):
         self.groups = groups
         self.deformable_groups = deformable_groups
         self.im2col_step = im2col_step
-        self.use_bias = bias
 
         self.weight = nn.Parameter(torch.Tensor(
             out_channels, in_channels//groups, *self.kernel_size))
-        self.bias = nn.Parameter(torch.Tensor(out_channels))
+        self.bias = None
+        if bias:
+            self.bias = nn.Parameter(torch.Tensor(out_channels))
         self.reset_parameters()
-        if not self.use_bias:
+        if self.bias is not None:
             self.bias.requires_grad = False
 
     def reset_parameters(self):
@@ -53,6 +54,9 @@ class ModulatedDeformConv(nn.Module):
             offset.shape[1]
         assert self.deformable_groups * self.kernel_size[0] * self.kernel_size[1] == \
             mask.shape[1]
+        if self.bias is None:
+            self.bias = torch.zeros(self.out_channels).cuda()
+
         return ModulatedDeformConvFunction.apply(input, offset, mask,
                                                    self.weight,
                                                    self.bias,
@@ -79,20 +83,23 @@ class ModulatedDeformConvPack(ModulatedDeformConv):
                                           kernel_size=self.kernel_size,
                                           stride=self.stride,
                                           padding=self.padding,
-                                          bias=True)
+                                          bias=False)
         self.conv_offset_mask.lr_mult = lr_mult
         self.init_offset()
 
     def init_offset(self):
         self.conv_offset_mask.weight.data.zero_()
-        self.conv_offset_mask.bias.data.zero_()
+        # self.conv_offset_mask.bias.data.zero_()
 
     def forward(self, input):
         out = self.conv_offset_mask(input)
         o1, o2, mask = torch.chunk(out, 3, dim=1)
         offset = torch.cat((o1, o2), dim=1)
         mask = torch.sigmoid(mask)
-        return ModulatedDeformConvFunction.apply(input, offset, mask,
+        mask *= 2
+        if self.bias is None:
+            self.bias = torch.zeros(self.out_channels).cuda()
+        return ModulatedDeformConvFunction.apply(input.contiguous(), offset.contiguous(), mask.contiguous(),
                                                 self.weight,
                                                 self.bias,
                                                 self.stride,

@@ -38,6 +38,8 @@ modulated_deform_conv_cuda_forward(const at::Tensor &input,
 
     AT_ASSERTM(input.is_contiguous(), "input tensor has to be contiguous");
     AT_ASSERTM(weight.is_contiguous(), "weight tensor has to be contiguous");
+    AT_ASSERTM(offset.is_contiguous(), "offset tensor has to be contiguous");
+    AT_ASSERTM(mask.is_contiguous(), "mask tensor has to be contiguous");
 
     AT_ASSERTM(input.type().is_cuda(), "input must be a CUDA tensor");
     AT_ASSERTM(weight.type().is_cuda(), "weight must be a CUDA tensor");
@@ -59,7 +61,7 @@ modulated_deform_conv_cuda_forward(const at::Tensor &input,
 
     AT_ASSERTM(batch % im2col_step_ == 0, "batch(%d) must divide im2col_step(%d)", batch, im2col_step_);
 
-    AT_ASSERTM((channels % group == 0) && (channels_out % group == 0), 
+    AT_ASSERTM((channels % group == 0) && (channels_out % group == 0),
         "channels(%d) and channels_out(%d) must divide group(%d)", channels, channels_out, group);
 
     // printf("Kernels: %d %d %d %d\n", kernel_h_, kernel_w_, kernel_w, kernel_h);
@@ -74,7 +76,7 @@ modulated_deform_conv_cuda_forward(const at::Tensor &input,
 
     const int height_out = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
     const int width_out = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
-    
+
     auto output = at::empty({batch * height_out * width_out, channels_out}, input.options());
 
     // prepare group weight and bias
@@ -127,13 +129,13 @@ std::vector<at::Tensor> modulated_deform_conv_cuda_backward(const at::Tensor &in
                                              const at::Tensor &offset,
                                              const at::Tensor &mask,
                                              const at::Tensor &grad_output,
-                                             const int kernel_h, 
+                                             const int kernel_h,
                                              const int kernel_w,
-                                             const int stride_h, 
+                                             const int stride_h,
                                              const int stride_w,
-                                             const int pad_h, 
+                                             const int pad_h,
                                              const int pad_w,
-                                             const int dilation_h, 
+                                             const int dilation_h,
                                              const int dilation_w,
                                              const int group,
                                              const int deformable_group,
@@ -168,7 +170,7 @@ std::vector<at::Tensor> modulated_deform_conv_cuda_backward(const at::Tensor &in
 
     AT_ASSERTM(batch % im2col_step_ == 0, "batch(%d) must divide im2col_step(%d)", batch, im2col_step_);
 
-    AT_ASSERTM((channels % group == 0) && (channels_out % group == 0), 
+    AT_ASSERTM((channels % group == 0) && (channels_out % group == 0),
         "channels(%d) and channels_out(%d) must divide group(%d)", channels, channels_out, group);
 
     AT_ASSERTM(kernel_h_ == kernel_h && kernel_w_ == kernel_w,
